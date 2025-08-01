@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 // @ts-ignore
 import { getServerSession } from 'next-auth/next';
 // @ts-ignore
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 // Add item to cart
 export async function POST(request: Request) {

@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { uploadFileToBlob, deleteBlobImage, listBlobs } from '@/lib/azure-storage';
 
 // Handle file uploads to Azure Blob Storage
