@@ -267,7 +267,7 @@ export default function AdminDashboard() {
     )
   }
 
-  if (!session || session.user?.role !== 'admin') {
+  if (!session || (session.user?.role !== 'admin' && session.user?.role !== 'ADMIN')) {
     return null
   }
 
