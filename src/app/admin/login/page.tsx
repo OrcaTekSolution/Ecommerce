@@ -37,7 +37,9 @@ export default function AdminLogin() {
         
         if (session?.user?.role === 'admin' || session?.user?.role === 'ADMIN') {
           console.log('Admin access granted, redirecting...');
-          router.push('/admin/dashboard')
+          // Simple immediate redirect
+          window.location.replace('/admin/dashboard')
+          return; // Exit function to prevent further execution
         } else {
           console.log('Access denied. User role:', session?.user?.role);
           setError(`Access denied. Admin privileges required. Your role: ${session?.user?.role || 'undefined'}`)
