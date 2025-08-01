@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile } from 'fs/promises'
-import { join } from 'path'
-import { mkdir } from 'fs/promises'
+import { BlobServiceClient } from '@azure/storage-blob'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
@@ -24,21 +22,25 @@ export async function POST(request: NextRequest) {
     // Generate unique filename
     const fileName = `category-${categoryId}-${Date.now()}-${file.name.replace(/\s/g, '-')}`
     
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads')
+    // Upload to Azure Blob Storage
+    const blobServiceClient = BlobServiceClient.fromConnectionString(
+      process.env.AZURE_STORAGE_CONNECTION_STRING!
+    )
     
-    try {
-      await mkdir(uploadsDir, { recursive: true })
-    } catch {
-      // Directory might already exist, that's fine
-    }
+    const containerClient = blobServiceClient.getContainerClient(
+      process.env.AZURE_STORAGE_CONTAINER_NAME!
+    )
+    
+    const blockBlobClient = containerClient.getBlockBlobClient(fileName)
+    
+    await blockBlobClient.upload(buffer, buffer.length, {
+      blobHTTPHeaders: {
+        blobContentType: file.type,
+      },
+    })
 
-    // Save file locally
-    const filePath = join(uploadsDir, fileName)
-    await writeFile(filePath, buffer)
-
-    // Create public URL
-    const imageUrl = `/uploads/${fileName}`
+    // Create public URL for the uploaded image
+    const imageUrl = `https://${process.env.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${process.env.AZURE_STORAGE_CONTAINER_NAME}/${fileName}`
 
     // Update category in database
     await prisma.category.update({
