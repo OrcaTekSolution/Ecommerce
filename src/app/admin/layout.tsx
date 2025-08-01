@@ -19,7 +19,7 @@ export default function AdminLayout({
   useEffect(() => {
     if (status === 'authenticated') {
       // @ts-ignore - we know role exists because we added it to the session
-      if (session?.user?.role !== 'admin') {
+      if (session?.user?.role !== 'admin' && session?.user?.role !== 'ADMIN') {
         router.push('/'); // Redirect non-admins
       } else {
         setLoading(false);
