@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { signIn, getSession } from 'next-auth/react'
+import { useState, useEffect } from 'react'
+import { signIn, getSession, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
 export default function AdminLogin() {
@@ -10,6 +10,15 @@ export default function AdminLogin() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { data: session, status } = useSession()
+
+  // Check if user is already authenticated and redirect
+  useEffect(() => {
+    if (status === 'authenticated' && (session?.user?.role === 'admin' || session?.user?.role === 'ADMIN')) {
+      console.log('User already authenticated as admin, redirecting...');
+      window.location.href = '/admin/dashboard';
+    }
+  }, [session, status]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,9 +46,7 @@ export default function AdminLogin() {
         
         if (session?.user?.role === 'admin' || session?.user?.role === 'ADMIN') {
           console.log('Admin access granted, redirecting...');
-          // Simple immediate redirect
-          window.location.replace('/admin/dashboard')
-          return; // Exit function to prevent further execution
+          window.location.href = '/admin/dashboard'; // Force redirect
         } else {
           console.log('Access denied. User role:', session?.user?.role);
           setError(`Access denied. Admin privileges required. Your role: ${session?.user?.role || 'undefined'}`)
