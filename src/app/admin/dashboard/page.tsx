@@ -20,6 +20,8 @@ interface Product {
   description: string
   price: number
   imageUrl: string | null
+  images: string | null
+  featured: boolean
   categoryId: number
   category: {
     name: string
@@ -32,7 +34,7 @@ export default function AdminDashboard() {
   
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
-  const [activeTab, setActiveTab] = useState<'categories' | 'products'>('categories')
+  const [activeTab, setActiveTab] = useState<'categories' | 'products' | 'featured'>('categories')
   const [loading, setLoading] = useState(true)
   const [uploadingImage, setUploadingImage] = useState<number | null>(null)
   
@@ -259,6 +261,92 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleProductImageUpload = async (productId: number, file: File, imageType: 'main' | 'additional') => {
+    setUploadingImage(productId)
+    
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('productId', productId.toString())
+    formData.append('imageType', imageType)
+    
+    try {
+      const response = await fetch('/api/products/upload-image', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      if (response.ok) {
+        const { product } = await response.json()
+        setProducts(prev => 
+          prev.map(p => 
+            p.id === productId ? product : p
+          )
+        )
+      } else {
+        alert('Failed to upload image')
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      alert('Error uploading image')
+    } finally {
+      setUploadingImage(null)
+    }
+  }
+
+  const handleDeleteProductImage = async (productId: number, imageUrl: string, imageType: 'main' | 'additional') => {
+    if (!confirm('Are you sure you want to delete this image?')) return
+    
+    try {
+      const response = await fetch('/api/products/manage', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productId, imageUrl, imageType }),
+      })
+      
+      if (response.ok) {
+        const updatedProduct = await response.json()
+        setProducts(prev => 
+          prev.map(p => 
+            p.id === productId ? updatedProduct : p
+          )
+        )
+      } else {
+        alert('Failed to delete image')
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error)
+      alert('Error deleting image')
+    }
+  }
+
+  const handleToggleFeatured = async (productId: number, featured: boolean) => {
+    try {
+      const response = await fetch('/api/products/manage', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productId, featured }),
+      })
+      
+      if (response.ok) {
+        const updatedProduct = await response.json()
+        setProducts(prev => 
+          prev.map(p => 
+            p.id === productId ? updatedProduct : p
+          )
+        )
+      } else {
+        alert('Failed to update featured status')
+      }
+    } catch (error) {
+      console.error('Error updating featured status:', error)
+      alert('Error updating featured status')
+    }
+  }
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -314,6 +402,16 @@ export default function AdminDashboard() {
               } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
             >
               Products ({products.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('featured')}
+              className={`${
+                activeTab === 'featured'
+                  ? 'border-pink-500 text-pink-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm`}
+            >
+              Featured Collections ({products.filter(p => p.featured).length})
             </button>
           </nav>
         </div>
@@ -541,90 +639,284 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* Products Table */}
-            <div className="bg-white shadow overflow-hidden rounded-md">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Product
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {products.map((product) => (
-                    <tr key={product.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            {product.imageUrl ? (
-                              <Image
-                                src={product.imageUrl}
-                                alt={product.name}
-                                width={40}
-                                height={40}
-                                className="h-10 w-10 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="h-10 w-10 rounded-full bg-pink-100 flex items-center justify-center">
-                                <span className="text-pink-600 text-xs font-medium">
-                                  {product.name.charAt(0)}
-                                </span>
-                              </div>
-                            )}
+            {/* Products Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product) => (
+                <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                  {/* Main Product Image */}
+                  <div className="aspect-w-16 aspect-h-9 bg-gray-200 relative">
+                    {product.imageUrl ? (
+                      <Image
+                        src={product.imageUrl}
+                        alt={product.name}
+                        width={400}
+                        height={300}
+                        className="w-full h-48 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <span className="text-gray-600 text-lg font-medium">{product.name}</span>
+                      </div>
+                    )}
+                    
+                    {/* Featured Badge */}
+                    {product.featured && (
+                      <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-xs font-medium">
+                        Featured
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Additional Images */}
+                  {product.images && JSON.parse(product.images).length > 0 && (
+                    <div className="p-2 bg-gray-50">
+                      <div className="flex space-x-2 overflow-x-auto">
+                        {JSON.parse(product.images).map((imgUrl: string, index: number) => (
+                          <div key={index} className="relative flex-shrink-0">
+                            <Image
+                              src={imgUrl}
+                              alt={`${product.name} ${index + 1}`}
+                              width={60}
+                              height={60}
+                              className="w-16 h-16 object-cover rounded-md"
+                            />
+                            <button
+                              onClick={() => handleDeleteProductImage(product.id, imgUrl, 'additional')}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                            >
+                              ×
+                            </button>
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                            <div className="text-sm text-gray-500">{product.description}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          {product.category.name}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${product.price.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => {
-                              setEditingProduct(product)
-                              setProductForm({
-                                name: product.name,
-                                description: product.description,
-                                price: product.price.toString(),
-                                categoryId: product.categoryId.toString()
-                              })
-                              setShowProductForm(true)
-                            }}
-                            className="text-indigo-600 hover:text-indigo-900"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(product.id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-medium text-gray-900">{product.name}</h3>
+                      <span className="text-lg font-bold text-pink-600">${product.price.toFixed(2)}</span>
+                    </div>
+                    
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
+                    
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        {product.category.name}
+                      </span>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      {/* Upload Main Image */}
+                      <label className="flex items-center space-x-1 bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-sm cursor-pointer hover:bg-blue-100">
+                        <FiUpload className="w-4 h-4" />
+                        <span>{uploadingImage === product.id ? 'Uploading...' : 'Main Image'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingImage === product.id}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              handleProductImageUpload(product.id, file, 'main')
+                            }
+                          }}
+                        />
+                      </label>
+                      
+                      {/* Upload Additional Image */}
+                      <label className="flex items-center space-x-1 bg-purple-50 text-purple-600 px-3 py-1 rounded-md text-sm cursor-pointer hover:bg-purple-100">
+                        <FiUpload className="w-4 h-4" />
+                        <span>Add Image</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploadingImage === product.id}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              handleProductImageUpload(product.id, file, 'additional')
+                            }
+                          }}
+                        />
+                      </label>
+                      
+                      {/* Delete Main Image */}
+                      {product.imageUrl && (
+                        <button
+                          onClick={() => handleDeleteProductImage(product.id, product.imageUrl, 'main')}
+                          className="flex items-center space-x-1 bg-red-50 text-red-600 px-3 py-1 rounded-md text-sm hover:bg-red-100"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                          <span>Remove Main</span>
+                        </button>
+                      )}
+                      
+                      {/* Toggle Featured */}
+                      <button
+                        onClick={() => handleToggleFeatured(product.id, !product.featured)}
+                        className={`flex items-center space-x-1 px-3 py-1 rounded-md text-sm ${
+                          product.featured 
+                            ? 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' 
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        <span>⭐</span>
+                        <span>{product.featured ? 'Unfeature' : 'Feature'}</span>
+                      </button>
+                      
+                      {/* Edit Product */}
+                      <button
+                        onClick={() => {
+                          setEditingProduct(product)
+                          setProductForm({
+                            name: product.name,
+                            description: product.description,
+                            price: product.price.toString(),
+                            categoryId: product.categoryId.toString()
+                          })
+                          setShowProductForm(true)
+                        }}
+                        className="flex items-center space-x-1 bg-gray-50 text-gray-600 px-3 py-1 rounded-md text-sm hover:bg-gray-100"
+                      >
+                        <FiEdit className="w-4 h-4" />
+                        <span>Edit</span>
+                      </button>
+                      
+                      {/* Delete Product */}
+                      <button
+                        onClick={() => handleDeleteProduct(product.id)}
+                        className="flex items-center space-x-1 bg-red-50 text-red-600 px-3 py-1 rounded-md text-sm hover:bg-red-100"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Featured Collections Tab */}
+        {activeTab === 'featured' && (
+          <div className="mt-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-medium text-gray-900">Featured Collections</h2>
+              <p className="text-sm text-gray-600">
+                Products marked as featured will appear in the featured collections section
+              </p>
+            </div>
+
+            {/* Featured Products Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.filter(product => product.featured).map((product) => (
+                <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-yellow-200">
+                  {/* Main Product Image */}
+                  <div className="aspect-w-16 aspect-h-9 bg-gray-200 relative">
+                    {product.imageUrl ? (
+                      <Image
+                        src={product.imageUrl}
+                        alt={product.name}
+                        width={400}
+                        height={300}
+                        className="w-full h-48 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center">
+                        <span className="text-yellow-800 text-lg font-medium">{product.name}</span>
+                      </div>
+                    )}
+                    
+                    {/* Featured Badge */}
+                    <div className="absolute top-2 right-2 bg-yellow-500 text-white px-3 py-1 rounded-md text-sm font-medium flex items-center space-x-1">
+                      <span>⭐</span>
+                      <span>Featured</span>
+                    </div>
+                  </div>
+                  
+                  {/* Additional Images */}
+                  {product.images && JSON.parse(product.images).length > 0 && (
+                    <div className="p-2 bg-yellow-50">
+                      <div className="flex space-x-2 overflow-x-auto">
+                        {JSON.parse(product.images).map((imgUrl: string, index: number) => (
+                          <Image
+                            key={index}
+                            src={imgUrl}
+                            alt={`${product.name} ${index + 1}`}
+                            width={60}
+                            height={60}
+                            className="w-16 h-16 object-cover rounded-md border-2 border-yellow-200"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-medium text-gray-900">{product.name}</h3>
+                      <span className="text-lg font-bold text-pink-600">${product.price.toFixed(2)}</span>
+                    </div>
+                    
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
+                    
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        {product.category.name}
+                      </span>
+                    </div>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      {/* Remove from Featured */}
+                      <button
+                        onClick={() => handleToggleFeatured(product.id, false)}
+                        className="flex items-center space-x-1 bg-yellow-50 text-yellow-600 px-3 py-1 rounded-md text-sm hover:bg-yellow-100"
+                      >
+                        <span>⭐</span>
+                        <span>Remove from Featured</span>
+                      </button>
+                      
+                      {/* Edit Product */}
+                      <button
+                        onClick={() => {
+                          setEditingProduct(product)
+                          setProductForm({
+                            name: product.name,
+                            description: product.description,
+                            price: product.price.toString(),
+                            categoryId: product.categoryId.toString()
+                          })
+                          setShowProductForm(true)
+                        }}
+                        className="flex items-center space-x-1 bg-gray-50 text-gray-600 px-3 py-1 rounded-md text-sm hover:bg-gray-100"
+                      >
+                        <FiEdit className="w-4 h-4" />
+                        <span>Edit</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {products.filter(product => product.featured).length === 0 && (
+                <div className="col-span-full text-center py-12">
+                  <div className="text-gray-400 text-lg mb-4">⭐</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Featured Products</h3>
+                  <p className="text-gray-600 mb-4">
+                    Mark products as featured to create special collections that will be highlighted on your website.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('products')}
+                    className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
+                  >
+                    Go to Products
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
