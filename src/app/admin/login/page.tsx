@@ -17,25 +17,34 @@ export default function AdminLogin() {
     setError('')
 
     try {
+      console.log('Attempting login with:', email);
+      
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
       })
 
+      console.log('SignIn result:', result);
+
       if (result?.error) {
+        console.log('Login error:', result.error);
         setError('Invalid credentials')
       } else {
         // Get the session to check role
         const session = await getSession()
+        console.log('Session after login:', session);
         
         if (session?.user?.role === 'admin' || session?.user?.role === 'ADMIN') {
+          console.log('Admin access granted, redirecting...');
           router.push('/admin/dashboard')
         } else {
-          setError('Access denied. Admin privileges required.')
+          console.log('Access denied. User role:', session?.user?.role);
+          setError(`Access denied. Admin privileges required. Your role: ${session?.user?.role || 'undefined'}`)
         }
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('An error occurred during login')
     } finally {
       setLoading(false)
