@@ -29,7 +29,7 @@ export default function AdminLogin() {
         // Get the session to check role
         const session = await getSession()
         
-        if (session?.user?.role === 'admin') {
+        if (session?.user?.role === 'admin' || session?.user?.role === 'ADMIN') {
           router.push('/admin/dashboard')
         } else {
           setError('Access denied. Admin privileges required.')
