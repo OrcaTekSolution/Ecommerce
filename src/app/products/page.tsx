@@ -246,23 +246,32 @@ export default function ProductsPage() {
             {displayProducts.map((product) => (
               <Link key={product.id} href={`/products/${product.id}`} className="card group">
                 <div className="relative h-56 overflow-hidden">
-                  <div 
-                    className={`absolute inset-0 ${loading ? 'animate-pulse' : ''} group-hover:scale-105`}
-                    style={{
-                      backgroundColor: 
-                        product.categoryId === 1 ? '#ffcdd2' : // Pink for newborn
-                        product.categoryId === 2 ? '#bbdefb' : // Blue for infant
-                        product.categoryId === 3 ? '#c8e6c9' : // Green for toddler
-                        product.categoryId === 4 ? '#fff9c4' : // Yellow for accessories
-                        '#f5f5f5', // Default light gray
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'transform 0.3s',
-                    }}
-                  >
-                    <span className="text-lg font-medium text-gray-600 text-center px-2">{product.name}</span>
-                  </div>
+                  {product.imageUrl ? (
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      className={`object-cover ${loading ? 'animate-pulse' : ''} group-hover:scale-105 transition-transform duration-200`}
+                    />
+                  ) : (
+                    <div 
+                      className={`absolute inset-0 ${loading ? 'animate-pulse' : ''} group-hover:scale-105`}
+                      style={{
+                        backgroundColor: 
+                          product.categoryId === 1 ? '#ffcdd2' : // Pink for newborn
+                          product.categoryId === 2 ? '#bbdefb' : // Blue for infant
+                          product.categoryId === 3 ? '#c8e6c9' : // Green for toddler
+                          product.categoryId === 4 ? '#fff9c4' : // Yellow for accessories
+                          '#f5f5f5', // Default light gray
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'transform 0.3s',
+                      }}
+                    >
+                      <span className="text-lg font-medium text-gray-600 text-center px-2">{product.name}</span>
+                    </div>
+                  )}
                   
                   {product.salePrice && (
                     <div className="absolute top-2 right-2 bg-primary text-white px-2 py-1 rounded-md">

@@ -86,21 +86,30 @@ export default function FeaturedProducts() {
       {displayProducts.map((product) => (
         <div key={product.id} className="card overflow-hidden">
           <div className="relative h-64">
-            <div 
-              className={`absolute inset-0 flex items-center justify-center ${loading ? 'animate-pulse' : ''}`}
-              style={{
-                backgroundColor: 
-                  product.categoryId === 1 ? '#ffcdd2' : // Pink for newborn
-                  product.categoryId === 2 ? '#bbdefb' : // Blue for infant
-                  product.categoryId === 3 ? '#c8e6c9' : // Green for toddler
-                  product.categoryId === 4 ? '#fff9c4' : // Yellow for accessories
-                  '#f5f5f5', // Default light gray
-              }}
-            >
-              <div className="text-center p-4">
-                <h3 className="text-lg font-medium text-gray-700">{product.name}</h3>
+            {product.imageUrl ? (
+              <Image
+                src={product.imageUrl}
+                alt={product.name}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-200"
+              />
+            ) : (
+              <div 
+                className={`absolute inset-0 flex items-center justify-center ${loading ? 'animate-pulse' : ''}`}
+                style={{
+                  backgroundColor: 
+                    product.categoryId === 1 ? '#ffcdd2' : // Pink for newborn
+                    product.categoryId === 2 ? '#bbdefb' : // Blue for infant
+                    product.categoryId === 3 ? '#c8e6c9' : // Green for toddler
+                    product.categoryId === 4 ? '#fff9c4' : // Yellow for accessories
+                    '#f5f5f5', // Default light gray
+                }}
+              >
+                <div className="text-center p-4">
+                  <h3 className="text-lg font-medium text-gray-700">{product.name}</h3>
+                </div>
               </div>
-            </div>
+            )}
             
             {product.salePrice && (
               <div className="absolute top-2 right-2 bg-primary text-white px-2 py-1 rounded-md">

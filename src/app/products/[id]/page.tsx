@@ -248,30 +248,44 @@ export default function ProductDetailPage() {
         {/* Product Images */}
         <div className="lg:w-1/2">
           <div className="relative h-96 bg-white rounded-lg overflow-hidden mb-4">
-            {/* Use the PlaceholderImage component instead of direct styling */}
-            <PlaceholderImage 
-              categoryId={product.categoryId}
-              className="absolute inset-0"
-              name={product.name}
-            />
+            {/* Display actual product image or placeholder */}
+            {(selectedImage || product.imageUrl) ? (
+              <Image
+                src={selectedImage || product.imageUrl}
+                alt={product.name}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <PlaceholderImage 
+                categoryId={product.categoryId}
+                className="absolute inset-0"
+                name={product.name}
+              />
+            )}
           </div>
           
-          {/* Thumbnail Gallery - use colored squares instead of actual images */}
+          {/* Thumbnail Gallery */}
           {(additionalImages.length > 0 || product.imageUrl) && (
             <div className="grid grid-cols-5 gap-2">
-              <button
-                className={`relative h-20 border rounded-md overflow-hidden ${
-                  !selectedImage ? 'ring-2 ring-primary' : ''
-                }`}
-                onClick={() => setSelectedImage(null)}
-              >
-                <PlaceholderImage
-                  categoryId={product.categoryId}
-                  className="absolute inset-0"
-                  name="Main"
-                />
-              </button>
+              {/* Main image thumbnail */}
+              {product.imageUrl && (
+                <button
+                  className={`relative h-20 border rounded-md overflow-hidden ${
+                    !selectedImage ? 'ring-2 ring-primary' : ''
+                  }`}
+                  onClick={() => setSelectedImage(null)}
+                >
+                  <Image
+                    src={product.imageUrl}
+                    alt="Main image"
+                    fill
+                    className="object-cover"
+                  />
+                </button>
+              )}
               
+              {/* Additional images */}
               {additionalImages.map((image, index) => (
                 <button
                   key={index}
@@ -280,10 +294,11 @@ export default function ProductDetailPage() {
                   }`}
                   onClick={() => setSelectedImage(image)}
                 >
-                  <PlaceholderImage
-                    categoryId={(product.categoryId + index) % 5}
-                    className="absolute inset-0"
-                    name={`#${index + 1}`}
+                  <Image
+                    src={image}
+                    alt={`Product image ${index + 1}`}
+                    fill
+                    className="object-cover"
                   />
                 </button>
               ))}

@@ -200,17 +200,25 @@ export default function CategoryPage() {
       {/* Category image banner */}
       {!loading && (
         <div className="relative h-64 md:h-80 w-full mb-12 rounded-lg overflow-hidden">
-          {/* Replace Image with a div background for now since we're having image issues */}
-          <div 
-            className="absolute inset-0 bg-gray-300"
-            style={{
-              backgroundColor: categoryId === '1' ? '#ffcdd2' : // Pink for newborn
-                              categoryId === '2' ? '#bbdefb' : // Blue for infant
-                              categoryId === '3' ? '#c8e6c9' : // Green for toddler
-                              categoryId === '4' ? '#fff9c4' : // Yellow for accessories
-                              '#e0e0e0' // Default gray
-            }}
-          />
+          {category?.imageUrl ? (
+            <Image
+              src={category.imageUrl}
+              alt={category.name}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div 
+              className="absolute inset-0 bg-gray-300"
+              style={{
+                backgroundColor: categoryId === '1' ? '#ffcdd2' : // Pink for newborn
+                                categoryId === '2' ? '#bbdefb' : // Blue for infant
+                                categoryId === '3' ? '#c8e6c9' : // Green for toddler
+                                categoryId === '4' ? '#fff9c4' : // Yellow for accessories
+                                '#e0e0e0' // Default gray
+              }}
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent flex items-center p-8">
             <h2 className="text-3xl md:text-4xl font-semibold text-white max-w-md">
               {category?.name || categoryName} Collection
@@ -270,23 +278,32 @@ export default function CategoryPage() {
             {displayProducts.map((product) => (
               <Link key={product.id} href={`/products/${product.id}`} className="card group">
                 <div className="relative h-56 overflow-hidden">
-                  <div 
-                    className={`absolute inset-0 ${loading ? 'animate-pulse' : ''} group-hover:scale-105`}
-                    style={{
-                      backgroundColor: 
-                        product.categoryId === 1 ? '#ffcdd2' : // Pink for newborn
-                        product.categoryId === 2 ? '#bbdefb' : // Blue for infant
-                        product.categoryId === 3 ? '#c8e6c9' : // Green for toddler
-                        product.categoryId === 4 ? '#fff9c4' : // Yellow for accessories
-                        '#f5f5f5', // Default light gray
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'transform 0.3s',
-                    }}
-                  >
-                    <span className="text-lg font-medium text-gray-600 text-center px-2">{product.name}</span>
-                  </div>
+                  {product.imageUrl ? (
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      className={`object-cover ${loading ? 'animate-pulse' : ''} group-hover:scale-105 transition-transform duration-200`}
+                    />
+                  ) : (
+                    <div 
+                      className={`absolute inset-0 ${loading ? 'animate-pulse' : ''} group-hover:scale-105`}
+                      style={{
+                        backgroundColor: 
+                          product.categoryId === 1 ? '#ffcdd2' : // Pink for newborn
+                          product.categoryId === 2 ? '#bbdefb' : // Blue for infant
+                          product.categoryId === 3 ? '#c8e6c9' : // Green for toddler
+                          product.categoryId === 4 ? '#fff9c4' : // Yellow for accessories
+                          '#f5f5f5', // Default light gray
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'transform 0.3s',
+                      }}
+                    >
+                      <span className="text-lg font-medium text-gray-600 text-center px-2">{product.name}</span>
+                    </div>
+                  )}
                   
                   {product.salePrice && (
                     <div className="absolute top-2 right-2 bg-primary text-white px-2 py-1 rounded-md">
