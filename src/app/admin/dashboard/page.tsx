@@ -54,7 +54,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (status === 'loading') return
     
-    if (!session || session.user?.role !== 'admin') {
+    if (!session || (session.user?.role !== 'admin' && session.user?.role !== 'ADMIN')) {
       router.push('/admin/login')
       return
     }

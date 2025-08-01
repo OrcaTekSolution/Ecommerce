@@ -16,7 +16,9 @@ export default function AdminLogin() {
   useEffect(() => {
     if (status === 'authenticated' && (session?.user?.role === 'admin' || session?.user?.role === 'ADMIN')) {
       console.log('User already authenticated as admin, redirecting...');
-      window.location.href = '/admin/dashboard';
+      setTimeout(() => {
+        window.location.href = '/admin/dashboard';
+      }, 1000); // Add delay to prevent conflicts
     }
   }, [session, status]);
 
